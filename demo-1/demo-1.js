@@ -29,13 +29,10 @@
 
     var SCALE,
         canvas,
+        ctx,
         world,
         fixDef,
-        ctx,
-        width,
-        height,
-        shapes = {},
-        needToDraw = false;
+        shapes = {};
         
     var debug = false;
     
@@ -145,12 +142,14 @@
     var box2d = {
         addToWorld: function(shape) {
             var bodyDef = this.create.bodyDef(shape);
-            var body = this.create.body(bodyDef);
+            var body = world.CreateBody(bodyDef);
             if (shape.radius) {
-                this.create.fixtures.circle(body, shape);
+                fixDef.shape = new b2CircleShape(shape.radius);
             } else {
-                this.create.fixtures.box(body, shape);
+                fixDef.shape = new b2PolygonShape;
+                fixDef.shape.SetAsBox(shape.width / 2, shape.height / 2);
             }
+            body.CreateFixture(fixDef);
         },
         create: {
             world: function() {
@@ -189,25 +188,19 @@
                 bodyDef.angle = shape.angle;
             
                 return bodyDef;
-            },
-            body: function(bodyDef) {
-                return world.CreateBody(bodyDef);
-            },
-            fixtures: {
-                circle: function(body, shape) {
-                    fixDef.shape = new b2CircleShape(shape.radius);
-                    body.CreateFixture(fixDef);
-                },
-                box: function(body, shape) {
-                    fixDef.shape = new b2PolygonShape;
-                    fixDef.shape.SetAsBox(shape.width / 2, shape.height / 2);
-                    body.CreateFixture(fixDef);
-                }
             }
         },
         get: {
             bodySpec: function(b) {
-                return {x: b.GetPosition().x, y: b.GetPosition().y, angle: b.GetAngle(), center: {x: b.GetWorldCenter().x, y: b.GetWorldCenter().y}};
+                return {
+                    x: b.GetPosition().x, 
+                    y: b.GetPosition().y, 
+                    angle: b.GetAngle(), 
+                    center: {
+                        x: b.GetWorldCenter().x, 
+                        y: b.GetWorldCenter().y
+                    }
+                };
             }
         }
     };
@@ -225,17 +218,13 @@
                     shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
                 }
             }
-            needToDraw = true;
         },
-        draw: function() {
-            if (!needToDraw) return;
-            
+        draw: function() {            
             if (!debug) ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             for (var i in shapes) {
-                shapes[i].draw(ctx);
+                shapes[i].draw();
             }
-            needToDraw = false;
         }
     };    
     
